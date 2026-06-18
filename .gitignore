@@ -1,10 +1,9 @@
 # Secret Files (DO NOT PUSH THESE)
-credentials.json
-token.json
 .env
 
 # Environment and Cache
 .venv/
+data/chroma_db
 venv/
 __pycache__/
 .DS_Store
