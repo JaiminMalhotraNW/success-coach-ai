@@ -1,8 +1,9 @@
-# Secrets and Credentials
-.env
+# Secret Files (DO NOT PUSH THESE)
 credentials.json
+token.json
+.env
 
-# Python Virtual Environments and Cache
+# Environment and Cache
 .venv/
 venv/
 __pycache__/
