@@ -1,0 +1,9 @@
+# Secrets and Credentials
+.env
+credentials.json
+
+# Python Virtual Environments and Cache
+.venv/
+venv/
+__pycache__/
+.DS_Store
