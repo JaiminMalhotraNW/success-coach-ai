@@ -4,7 +4,6 @@ import gspread
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from google.oauth2.credentials import Credentials
 
 # Load environment variables from .env
 load_dotenv()
@@ -12,21 +11,16 @@ load_dotenv()
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1vKn-9LCCcBPjfcFUgEzAWBGpsjzCJtPvrln05rR1Ht0/edit?gid=911132763#gid=911132763"
 
 def get_worksheet_data(worksheet_name: str):
-    """Internal helper to fetch all records from a specific Google Sheet tab."""
+    """Internal helper to fetch all records from a specific Google Sheet tab using Service Account."""
     try:
-        # 1. Grab the token string from .env
-        token_string = os.getenv("GOOGLE_TOKEN")
-        if not token_string:
-            return []
-            
-        # 2. Convert to dictionary
-        token_dict = json.loads(token_string)
+        # Load Service Account credentials from .env
+        creds_string = os.getenv("GOOGLE_CREDENTIALS")
+        creds_dict = json.loads(creds_string)
         
-        # 3. Authenticate using the bulletproof method from our test
-        creds = Credentials.from_authorized_user_info(token_dict)
-        gc = gspread.authorize(creds)
+        # Authenticate with Service Account
+        gc = gspread.service_account_from_dict(creds_dict)
         
-        # 4. Fetch the data
+        # Fetch data
         return gc.open_by_url(SHEET_URL).worksheet(worksheet_name).get_all_records()
     except Exception as e:
         print(f"Google Sheets Error: {e}")
@@ -35,7 +29,6 @@ def get_worksheet_data(worksheet_name: str):
 @st.cache_data(ttl=3600) 
 def get_all_students():
     """Fetches unique students from the 'roster' sheet to populate the UI dropdown."""
-    # CHANGED: Target the existing 'roster' tab
     data = get_worksheet_data("roster")
     students_dict = {}
     
@@ -45,15 +38,15 @@ def get_all_students():
             s_name = str(row.get('name', s_id)).strip() 
             if s_id:
                 students_dict[s_id] = s_name
-
     return students_dict
 
 @tool
 def get_student_scores(student_id: str) -> str:
     """
-    Retrieves academic performance data for a student.
-    Returns a list of dictionaries containing subject name, score, max_score, and date.
-    Use this when a student asks about their exam grades or academic progress.
+    Look up detailed exam performance for a specific student. 
+    Use this to retrieve a list of subject-wise exam scores, including 
+    the student's marks, the maximum possible marks, and the exam date. 
+    Ideal for answering queries about academic progress or specific test results.
     """
     data = get_worksheet_data("exam_scores")
     records = [r for r in data if str(r.get('student_id', '')).strip().upper() == student_id.upper()]
@@ -62,9 +55,10 @@ def get_student_scores(student_id: str) -> str:
 @tool
 def get_student_attendance(student_id: str) -> str:
     """
-    Retrieves weekly attendance statistics for a student.
-    Returns a list of records showing weeks scheduled vs attended and attendance percentage.
-    Use this to identify attendance patterns or when a student asks 'how is my attendance?'.
+    Look up the weekly attendance history for a specific student.
+    Use this to see how many classes were scheduled vs. attended and 
+    calculate overall attendance percentage. Essential for providing 
+    feedback on attendance patterns or addressing concerns about absenteeism.
     """
     data = get_worksheet_data("attendance")
     records = [r for r in data if str(r.get('student_id', '')).strip().upper() == student_id.upper()]
@@ -73,9 +67,10 @@ def get_student_attendance(student_id: str) -> str:
 @tool
 def get_exam_schedule(student_id: str) -> str:
     """
-    Retrieves the upcoming exam schedule for a specific student.
-    Returns a list of upcoming subjects, dates, and exam types.
-    Use this when a student asks about their upcoming tests or deadlines.
+    Look up the upcoming exam schedule for a specific student.
+    Use this to provide details on upcoming tests, including subjects, 
+    scheduled dates, and exam formats. Use this when the student asks 
+    about 'when is my next exam' or 'what tests are coming up'.
     """
     data = get_worksheet_data("exam_schedule")
     records = [r for r in data if str(r.get('student_id', '')).strip().upper() == student_id.upper()]
