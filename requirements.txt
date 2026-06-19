@@ -6,10 +6,13 @@ langchain-community
 langchain-chroma
 langchain-huggingface
 langgraph
-chromadb
+chromadb==0.5.0
 pypdf
 sentence-transformers
 python-dotenv
 gspread
 google-auth
 google-auth-oauthlib
+opentelemetry-api==1.24.0
+opentelemetry-sdk==1.24.0
+opentelemetry-exporter-otlp-proto-grpc==1.24.0
